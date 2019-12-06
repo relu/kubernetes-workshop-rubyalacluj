@@ -5,4 +5,4 @@ app = Proc.new do |env|
   ['200', {'Content-Type' => 'text/html'}, ["This is %s" % name]]
 end
 
-Rack::Handler::WEBrick.run app
+Rack::Handler::WEBrick.run app, Port: 3000
