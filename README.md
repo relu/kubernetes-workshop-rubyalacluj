@@ -1,5 +1,36 @@
 # Kubernetes Introduction Workshop
 
+## Prerequisites
+
+Install the following tools on your machine:
+
+### Minikube
+
+Please follow the guide
+[here](https://kubernetes.io/docs/tasks/tools/install-minikube/) to install
+minikube.
+To set up the local cluster run the following command:
+
+```
+$ minikube start --cpus 2 --memory 4096
+```
+
+You can adjust the number of CPUs and Memory allocated to the minikube cluster
+according to your system's needs.
+A modest system should run just fine with a single CPU and 2G or memory.
+
+### Kubectl
+
+Follow [the guide](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+
+### Helm
+
+Install using the guide [here](https://github.com/helm/helm#install)
+
+### stern
+
+Install from [here](https://github.com/wercker/stern)
+
 ## Clone this repository
 
 In order for us to work through the examples more easily make sure to clone
