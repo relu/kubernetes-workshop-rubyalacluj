@@ -384,10 +384,10 @@ configuration by adding a resources section:
 resources:
   requests:
     cpu: 0.1
-    memory: 25Mi
+    memory: 50Mi
   limits:
     cpu: 0.25
-    memory: 50Mi
+    memory: 100Mi
 ```
 
 Let's try to understand these a bit better:
@@ -428,6 +428,149 @@ dashboard easily by running:
 $ minikube dashboard
 ```
 
+## Configuration
+
+Let's apply a new manifest file:
+
+```
+$ kubectl apply -f manifests/07-configuration.yaml
+```
+
+_NOTE: As mentioned earlier, a kubernetes manifest file can contain multiple
+object definitions with a file delimiter used between them `---`._
+
+### ConfigMaps
+
+Let's see how ConfigMaps can be used to manage application configuration:
+
+The manifest has three configmaps defined, we can see they got created by
+listing them:
+
+```
+$ kubectl get cm
+```
+
+Now let's see how the ConfigMaps are used by our pods. We can describe one of
+the pods to see:
+
+```
+$ kubectl describe pod -l app=web-app
+```
+
+_NOTE: Some kubectl subcomands such as `get`, `describe`, `delete` etc. accept
+a label selector `--selector` or `-l` argument which allows us to filter out
+the objects we want to retrieve._
+
+We can now see our pods use the three configmaps in three different ways:
+1. Environment
+2. Environment Variables from
+3. Mounts (volumes)
+
+If we exec into one of the pod containers we'll be able see the environment
+variables and check the `/tmp/config` directory which should have a `file.txt`
+in it with the contets from our ConfigMap.
+
+### Secrets
+
+Inside the manifests secret values are stored as base64 encoded values. To
+encode values you can use the following command:
+
+```
+$ echo -n 'secret value' | base64
+```
+
+_NOTE: The `type: Opaque` means that the secret contains arbitrary
+non-structured data. Kubernetes has other secret types such as ServiceAccount
+tokens or secrets used to authenticate private image repositories which are
+constrained to a particular schema._
+
+Secrets can be used the same way ConfigMaps are within a pod and the values
+will be exposed to the pod containers decrypted.
+
+## Logging
+
+We are able to see the logs our pod applications produce by using the `kubectl
+logs` subcommand.
+
+```
+$ kubectl logs -f -l app=web-app
+```
+
+For better results, you can use `stern` :)
+
 ## Helm
 
-TBC
+Helm is kind of like a package manager for Kubernetes. Simply put, it enables
+users to define manifest files and create a unified package which we call a
+Chart.
+
+Helm is also able to retrieve charts from dedicated repositories and it also has
+dependency management which means that a chart can rely on multiple subcharts.
+
+A large collection of community maintained charts can be found here:
+https://github.com/helm/charts
+
+### Our own chart
+
+In the `helm/` directory you can find an example chart created based on the
+manifests we've worked through until now. Our helm chart also has a dependency
+on `redis`.
+
+Let's instll our first helm release of the `example-app` chart into the
+cluster:
+
+```
+$ helm install example-app-ruby ./helm/example-app --set image.repository=aurelcanciu/example-app-ruby --wait
+```
+
+Now we can see that our release was created by listing the available releases:
+
+```
+$ helm ls
+```
+
+_NOTE: In Helm v3, releases are namespaced._
+
+What if we want to upgrade our release? Let's create the ingress which was
+previously disabled:
+
+```
+$ helm upgrade example-app-ruby ./helm/example-app --reuse-values --set ingress.enabled=true
+```
+
+Now we should see that our release revision was incremented and we should have
+a new ingress object.
+
+Let's create releases for our other apps:
+
+```
+$ helm install example-app-python ./helm/example-app --set image.repository=aurelcanciu/example-app-python -f ./helm/overrides.yaml --wait
+$ helm install example-app-go ./helm/example-app --set image.repository=aurelcanciu/example-app-go -f ./helm/overrides.yaml --wait
+```
+
+As you can see, we've used the same chart to create two new releases with a
+different images. We also used a file to override some chart values instead of
+providing them via the command line. I imagine you can by now figure out how
+useful can helm be when it comes to application deployment management.
+
+### Uninstalling a release
+
+This is as simple as running:
+
+```
+$ helm uninstall example-app-ruby
+```
+
+That's it!
+
+## Cleanup
+
+It's done, so let's clean up the mess :)
+
+```
+$ kubectl delete ns kubealacluj
+$ minikube stop
+$ minikube delete
+```
+
+Au revoir!

@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+        role: static
+    spec:
+      containers:
+        - name: app
+          image: aurelcanciu/example-app-ruby
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+              name: http
+          env:
+            - name: OTHER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: web-app-reference
+                  key: somekey
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: web-app
+                  key: secretkey
+          envFrom:
+            - configMapRef:
+                name: web-app-environment
+          volumeMounts:
+            - name: config-volume
+              mountPath: /tmp/config
+          resources:
+            requests:
+              cpu: 0.1
+              memory: 50Mi
+            limits:
+              cpu: 0.25
+              memory: 100Mi
+      volumes:
+        - name: config-volume
+          configMap:
+            name: web-app-file
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-app-environment
+data:
+  NAME: ConfigMap
+  ENV_VAR: test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-app-file
+data:
+  file.txt: |-
+    I'm in a file
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-app-reference
+data:
+  somekey: value
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: web-app
+data:
+  secretkey: Y29uZmlkZW50aWFs
