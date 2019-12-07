@@ -395,7 +395,17 @@ address from `minikube ip` and visiting the address in the browser.
 ## Resource management
 
 In order to get metrics working we need to install the metrics-server, it's
-really simple if we use helm to do this (more on this a bit later):
+really simple if we use helm to do this (more on this a bit later).
+
+First we need to add the `stable` repository helm will use to grab the
+metrics-server chart:
+
+```
+$ helm repo add stable https://kubernetes-charts.storage.googleapis.com
+```
+
+Then we can install it:
+
 
 ```
 $ helm install metrics-server stable/metrics-server -n kube-system --set 'args[0]=--kubelet-insecure-tls'
@@ -405,7 +415,7 @@ To get a sense of how much resources a pod consumes we can use the following
 command:
 
 ```
-$ kube top pod
+$ kubectl top pod
 ```
 
 Now that we know how much resources our pods are using, we can tweak the pod
