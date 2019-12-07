@@ -49,6 +49,10 @@ $ minikube start
 
 ## Create a namespace
 
+A namespace represents a means of partitioning a kubernetes cluster. Most
+Kubernetes objects are namespaced, with the exception of namespaces themselves,
+persistent volumes and cluster nodes.
+
 We'll use this namespace to create resources inside it and once we're done
 we'll be able to quickly clean everything up by deleting the namespace which
 will also delete all resources contained in it.
@@ -209,8 +213,9 @@ labeld with the same values as its selector key-value pairs.
 
 ## Replication
 
-So what if we want to scale-out our pod for resilience and HA? Sounds like we
-need to create more of them... Here's where the ReplicaSet comes in handy.
+So what if we want to scale-out our application for resilience and high
+availability? Sounds like we need to create more of them pods... Here's where
+the ReplicaSet comes in handy.
 
 ```
 $ kubectl apply -f manifests/03-replicaset.yaml
@@ -227,11 +232,14 @@ $ kubectl get pod
 As you can see we have three pods running right now. But wait, why are they
 three when we instructed the RestfulSet to bring up three and we had one
 already created statically from before? It's simple, the first pod we created
-has the same label as the pods created and controlled by the ReplicaSet, this
-means that the ReplicaSet will count that in as well as long as its selector
-will match it.
+has the same label as the pods managed by the ReplicaSet, this means that the
+ReplicaSet will count that in as well as long as its selector will match it.
 
-Let's delete our initially created pod and see what happens.
+The ReplicaSet will always maintain a fixed number of pods as per its
+configuration. Think of it as a means to group multiple pods of the same type
+together. If one pod is terminated, a new pod will be crated in its place.
+
+Let's delete our initially created static pod and see what happens.
 
 ```
 $ kubectl delete -f manifests/01-pod.yaml
