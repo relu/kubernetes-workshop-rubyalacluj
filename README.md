@@ -394,7 +394,7 @@ You'll need to wait some time until the ingress is ready. Can check it out by
 running:
 
 ```
-$ kubectl describe ingress web-ingress
+$ kubectl describe ingress web-app
 ```
 
 We should now be able to access the new ingress load balancer by getting its ip
