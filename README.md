@@ -4,20 +4,18 @@
 
 Install the following tools on your machine:
 
-### Minikube
+### Kind
 
 Please follow the guide
-[here](https://kubernetes.io/docs/tasks/tools/install-minikube/) to install
-minikube.
-To set up the local cluster run the following command:
+[here](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) to install
+kind.  To set up the local cluster run the following command:
 
 ```
-$ minikube start --cpus 2 --memory 4096
+$ kind create cluster --name workshop --config manifests/00-kind-config.yaml
 ```
 
-You can adjust the number of CPUs and Memory allocated to the minikube cluster
-according to your system's needs.
-A modest system should run just fine with a single CPU and 2G or memory.
+The configuration contains some settings that allow us to set up ingresses
+later on.
 
 ### Kubectl
 
@@ -37,15 +35,6 @@ In order for us to work through the examples more easily make sure to clone
 this repository and switch your current working path to its location.
 
 All commands involving files should run from the repository base directory.
-
-## Spin up minikube
-
-First thing we need to do is spin up the minikube cluster on our local
-machines. To do that, you must run a simple command:
-
-```
-$ minikube start
-```
 
 ## Create a namespace
 
@@ -263,10 +252,6 @@ corresponding to the 3 pods:
 $ kubectl describe svc web-app
 ```
 
-_NOTE: Since we're running minikube, we can actually access NodePort and
-LoadBalancer type services directly on the host ip. To retrieve the endpoint
-you can run `minikube service web-app -n kubealacluj --url`_
-
 ## Deployments
 
 How do we do a rolling update of our application right now? Well, it's not
@@ -370,18 +355,17 @@ the external world. In order to do this we'll need to create an Ingress object.
 
 Normally an ingress object maps 1:1 with an external Load Balancer serivce,
 since we're running locally and not in the cloud we'll need to install an
-ingress controller. We can do this quite easily with minikube since it has an
-addon which automatically installs the nginx-ingress components:
+ingress controller. To install the nginx ingress controller component run:
 
 ```
-$ minikube addons enable ingress
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
 ```
 
-If you look in the `kube-system` namespace, you'll see there's a new pod
-running there called `nginx-ingress-controller`:
+If you look in the `ingress-nginx` namespace, you'll see there's a new pod
+running there with a name prefix `ingress-nginx-controller-`:
 
 ```
-$ kubectl get pod -n kube-system
+$ kubectl get pod -n ingress-nginx
 ```
 
 Now we're ready to create our Ingress:
@@ -397,8 +381,7 @@ running:
 $ kubectl describe ingress web-app
 ```
 
-We should now be able to access the new ingress load balancer by getting its ip
-address from `minikube ip` and visiting the address in the browser.
+We should now be able to access the new ingress load balancer on localhost.
 
 ## Resource management
 
@@ -417,6 +400,26 @@ Then we can install it:
 
 ```
 $ helm install metrics-server stable/metrics-server -n kube-system --set 'args[0]=--kubelet-insecure-tls'
+```
+
+Alternatively, we can install metrics-server via kubectl using the manifest:
+
+```
+$ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.7/components.yaml
+```
+
+And apply some changes to the deployment so it works with our kind setup:
+
+```
+$ kubectl edit deployments.apps -n kube-system metrics-server
+```
+
+Add to container args:
+
+```
+args:
+  - --kubelet-insecure-tls
+  - --kubelet-preferred-address-types=InternalIP
 ```
 
 To get a sense of how much resources a pod consumes we can use the following
@@ -467,15 +470,6 @@ _NOTE: This configuration is at the level of a single pod container. Since you
 can run multiple containers in a pod, each can have its own specific resource
 requirements. In a lot of cases, sidecar containers will require a lot less
 resources than the application they side with._
-
-## Kubernetes dashboard
-
-Minikube comes with the Kubernetes dashboard integrated. You can access the
-dashboard easily by running:
-
-```
-$ minikube dashboard
-```
 
 ## Configuration
 
@@ -547,6 +541,35 @@ $ kubectl logs -f -l app=web-app
 
 For better results, you can use `stern` :)
 
+## Kubernetes dashboard
+
+Install the kubernetes dashboard via manifest:
+
+```
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.4/aio/deploy/recommended.yaml
+```
+
+And create an admin user:
+
+```
+$ kubectl apply -f manifests/08-dashboard-admin.yaml
+```
+
+Before we can use the dashboard we need a token to authenticate:
+
+```
+$ kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}') | awk '$1=="token:"{print $2}'
+```
+
+And now run the kubectl proxy:
+
+```
+$ kubectl proxy
+```
+
+Now you can access the dashboard at:
+http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+
 ## Helm
 
 Helm is kind of like a package manager for Kubernetes. Simply put, it enables
@@ -617,9 +640,7 @@ That's it!
 It's done, so let's clean up the mess :)
 
 ```
-$ kubectl delete ns kubealacluj
-$ minikube stop
-$ minikube delete
+$ kind delete cluster --name workshop
 ```
 
 Au revoir!
