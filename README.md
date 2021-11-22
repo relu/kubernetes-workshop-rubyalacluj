@@ -47,7 +47,7 @@ we'll be able to quickly clean everything up by deleting the namespace which
 will also delete all resources contained in it.
 
 ```
-$ kubectl create namespace kubealacluj
+$ kubectl create namespace workshop
 ```
 
 Now that we have your namespace, let's see if we can list it out:
@@ -65,7 +65,7 @@ of active.
 Now let's inspect this namespace resource and see how it looks like:
 
 ```
-$ kubectl describe ns kubealacluj
+$ kubectl describe ns workshop
 ```
 
 This should show us a more detailed view of our namespace's current state.
@@ -81,7 +81,7 @@ by a declarative manifest.
 Let's see how the namespace manifest looks like:
 
 ```
-$ kubectl get -o yaml ns kubealacluj
+$ kubectl get -o yaml ns workshop
 ```
 
 _NOTE: As with other commands described earlier, you can use `kubectl get` on
@@ -90,7 +90,7 @@ all k8s objects._
 What if we want to edit the resource in place? We can surely do that!
 
 ```
-$ kubectl edit ns kubealacluj
+$ kubectl edit ns workshop
 ```
 
 This will bring up your editor and give you the posibility to edit the
@@ -101,7 +101,7 @@ context to make use of it so that all future interactions will use our
 namespace.
 
 ```
-$ kubectl config set-context --current --namespace kubealacluj
+$ kubectl config set-context --current --namespace workshop
 ```
 
 _NOTE: By default, contexts will have the namespace set to the `default`
