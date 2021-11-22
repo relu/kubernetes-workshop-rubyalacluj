@@ -1,8 +1,14 @@
-FROM golang:1.13-alpine
+FROM golang:1.17-alpine as build
 
-COPY . /app
-WORKDIR /app
+COPY . /build
+WORKDIR /build
 
 EXPOSE 3000
 
-CMD ["go", "run", "app.go"]
+RUN CGO_ENABLED=0 go build ./app.go
+
+FROM gcr.io/distroless/static
+
+COPY --from=build /build/app /app
+
+CMD ["/app"]

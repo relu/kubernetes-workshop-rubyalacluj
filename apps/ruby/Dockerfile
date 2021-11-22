@@ -1,9 +1,9 @@
-FROM ruby:2.6-alpine
+FROM ruby:3.0-alpine
 
 COPY . /app
 WORKDIR /app
 
-RUN gem install rack
+RUN gem install rack webrick
 
 EXPOSE 3000
 
