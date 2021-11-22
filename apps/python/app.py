@@ -11,6 +11,6 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes(('Hello from %s' % name).encode('utf-8')))
 
-httpd = HTTPServer(('localhost', PORT), Handler)
+httpd = HTTPServer(('0.0.0.0', PORT), Handler)
 print('serving at port', PORT)
 httpd.serve_forever()

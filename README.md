@@ -160,7 +160,7 @@ of course). Our pod container's image is based on
 default shell.
 
 ```
-$ kubectl exec -ti web-app ash
+$ kubectl exec -ti web-app -- ash
 ```
 
 This should bring up the shell prompt and voila, you're in!
@@ -270,8 +270,12 @@ scaling and removing replicasets._
 
 Our deployment should be now created:
 ```
-$ kubectl get deployments
+$ kubectl get deployments -o wide
 ```
+
+_NOTE: The `-o wide` argument instructs kubectl to format the output in wide
+mode which will show some extra information dependening on the resource kind
+being listed._
 
 If we look at the pods again you'll notice nothing really changed, same reason
 as for why the replicaset didn't create an extra before and that's because the
@@ -283,7 +287,7 @@ selector matches the existing pods which prevent creating new ones.
 Now let's make a change to our deployment so that an update takes place:
 
 ```
-$ kubectl set image deployment/web-app app=aurelcanciu/example-app-python --record
+$ kubectl set image deployment/web-app app=aurelcanciu/example-app-python
 ```
 
 Now, if we look at the pods, we'll see that the rolling update process started
@@ -311,7 +315,7 @@ $ kubectl scale deployment web-app --replicas 5
 Let's update the deployment once again with the go image:
 
 ```
-$ kubectl set image deployment/web-app app=aurelcanciu/example-app-go --record
+$ kubectl set image deployment/web-app app=aurelcanciu/example-app-go
 ```
 
 _NOTE: We're updating the image but we can actually update just the image tag
@@ -392,34 +396,20 @@ First we need to add the `stable` repository helm will use to grab the
 metrics-server chart:
 
 ```
-$ helm repo add stable https://kubernetes-charts.storage.googleapis.com
+$ helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
 ```
 
 Then we can install it:
 
 
 ```
-$ helm install metrics-server stable/metrics-server -n kube-system --set 'args[0]=--kubelet-insecure-tls'
+$ helm install metrics-server metrics-server/metrics-server -n kube-system --set 'args[0]=--kubelet-insecure-tls'
 ```
 
 Alternatively, we can install metrics-server via kubectl using the manifest:
 
 ```
-$ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.7/components.yaml
-```
-
-And apply some changes to the deployment so it works with our kind setup:
-
-```
-$ kubectl edit deployments.apps -n kube-system metrics-server
-```
-
-Add to container args:
-
-```
-args:
-  - --kubelet-insecure-tls
-  - --kubelet-preferred-address-types=InternalIP
+$ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
 To get a sense of how much resources a pod consumes we can use the following
@@ -458,7 +448,7 @@ CPU is specified in units of cores: 1 CPU core = 1 cpu unit = 1000m (milli)cpu u
 
 ### Memory
 
-Memory is specified in units of bytes: 1Mi = 1 mebibyte =  1024 * 1024 bytes
+Memory is specified in units of bytes: 1Mi = 1 Mebibyte = 1024 * 1024 bytes
 
 ### Apply the resources configuration
 
@@ -546,7 +536,7 @@ For better results, you can use `stern` :)
 Install the kubernetes dashboard via manifest:
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.4/aio/deploy/recommended.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
 ```
 
 And create an admin user:
@@ -601,13 +591,13 @@ Now we can see that our release was created by listing the available releases:
 $ helm ls
 ```
 
-_NOTE: In Helm v3, releases are namespaced._
+_NOTE: Helm releases are namespaced._
 
 What if we want to upgrade our release? Let's create the ingress which was
 previously disabled:
 
 ```
-$ helm upgrade example-app-ruby ./helm/example-app --reuse-values --set ingress.enabled=true
+$ helm upgrade example-app-ruby ./helm/example-app --reuse-values -f ./helm/values-ruby.yaml --set ingress.enabled=true
 ```
 
 Now we should see that our release revision was incremented and we should have
@@ -616,11 +606,11 @@ a new ingress object.
 Let's create releases for our other apps:
 
 ```
-$ helm install example-app-python ./helm/example-app --set image.repository=aurelcanciu/example-app-python -f ./helm/overrides.yaml --wait
-$ helm install example-app-go ./helm/example-app --set image.repository=aurelcanciu/example-app-go -f ./helm/overrides.yaml --wait
+$ helm install example-app-python ./helm/example-app --set image.repository=aurelcanciu/example-app-python -f ./helm/values-python.yaml -f ./helm/overrides.yaml --wait
+$ helm install example-app-go ./helm/example-app --set image.repository=aurelcanciu/example-app-go -f ./helm/values-go.yaml -f ./helm/overrides.yaml --wait
 ```
 
-As you can see, we've used the same chart to create two new releases with a
+As you can see, we've used the same chart to create two new releases with
 different images. We also used a file to override some chart values instead of
 providing them via the command line. I imagine you can by now figure out how
 useful can helm be when it comes to application deployment management.
