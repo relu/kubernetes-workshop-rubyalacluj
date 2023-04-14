@@ -1,10 +1,10 @@
-FROM ruby:3.0-alpine
+FROM ruby:3.2-alpine
 
 COPY . /app
 WORKDIR /app
 
-RUN gem install rack webrick
+RUN gem install rack rackup
 
 EXPOSE 3000
 
-CMD ["ruby", "app.rb"]
+CMD ["rackup", "--port", "3000", "--host", "0.0.0.0"]
