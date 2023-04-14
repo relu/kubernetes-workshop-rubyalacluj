@@ -4,6 +4,13 @@
 
 Install the following tools on your machine:
 
+### Clone this repository
+
+In order for us to work through the examples more easily make sure to clone
+this repository and switch your current working path to its location.
+
+All commands involving files should run from the repository base directory.
+
 ### Kind
 
 Please follow the guide
@@ -27,14 +34,7 @@ Install using the guide [here](https://github.com/helm/helm#install)
 
 ### stern
 
-Install from [here](https://github.com/wercker/stern)
-
-## Clone this repository
-
-In order for us to work through the examples more easily make sure to clone
-this repository and switch your current working path to its location.
-
-All commands involving files should run from the repository base directory.
+Install from [here](https://github.com/stern/stern)
 
 ## Create a namespace
 
@@ -165,6 +165,8 @@ $ kubectl exec -ti web-app -- ash
 
 This should bring up the shell prompt and voila, you're in!
 
+_NOTE: To exit use the key combination Ctrl+D_
+
 ## Create a service
 
 Now that we have a pod, let's create a service object that would act as a proxy
@@ -178,7 +180,6 @@ And we should see our newly created service:
 
 ```
 $ kubectl get svc
-
 ```
 
 _NOTE: Our service is of type NodePort, this service type will create a unique
@@ -412,6 +413,8 @@ Alternatively, we can install metrics-server via kubectl using the manifest:
 $ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
+_NOTE: This might take some time until the metrics-server starts running._
+
 To get a sense of how much resources a pod consumes we can use the following
 command:
 
@@ -420,7 +423,9 @@ $ kubectl top pod
 ```
 
 Now that we know how much resources our pods are using, we can tweak the pod
-configuration by adding a resources section:
+configuration by adding a resources section in our deployment (no need to
+change the file yourself, we have that already in
+`manifests/06-deployment-with-resources.yaml`, proceed to the next step):
 
 ```yaml
 resources:
@@ -536,7 +541,7 @@ For better results, you can use `stern` :)
 Install the kubernetes dashboard via manifest:
 
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
 ```
 
 And create an admin user:
@@ -548,7 +553,7 @@ $ kubectl apply -f manifests/08-dashboard-admin.yaml
 Before we can use the dashboard we need a token to authenticate:
 
 ```
-$ kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}') | awk '$1=="token:"{print $2}'
+$ kubectl -n kubernetes-dashboard describe secret admin-token | awk '$1=="token:"{print $2}'
 ```
 
 And now run the kubectl proxy:
